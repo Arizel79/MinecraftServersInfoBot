@@ -2,3 +2,4 @@ pytelegrambotapi
 sqlalchemy
 requests
 python-dotenv
+flask

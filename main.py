@@ -9,6 +9,8 @@ from models.orm import MySession, User  # ORM-модели для работы �
 import logging                # Стандартная библиотека Python для ведения логов
 import os
 from dotenv import load_dotenv
+import threading
+from flask import Flask
 
 # Загружаем переменные из .env
 load_dotenv()
@@ -401,8 +403,20 @@ class Bot():
         except requests.exceptions.ConnectionError as ex:
             logging.error(f"ConnectionError: {ex}")
 
+def open_port():
+    app = Flask(__name__)
+
+    @app.route('/')
+    def hello():
+        return "Service is running"
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=8080)
 
 if __name__ == "__main__":
+    t = threading.Thread(target=open_port)
+    t.run()
+
     running = True
     while running:
         b = Bot()
