@@ -403,6 +403,9 @@ class Bot():
         except requests.exceptions.ConnectionError as ex:
             logging.error(f"ConnectionError: {ex}")
 
+        except telebot.apihelper.ApiTelegramException:
+            print("telebot.apihelper.ApiTelegramException 95747")
+
 
 app = Flask(__name__)
 
