@@ -403,18 +403,18 @@ class Bot():
         except requests.exceptions.ConnectionError as ex:
             logging.error(f"ConnectionError: {ex}")
 
-def open_port():
-    app = Flask(__name__)
 
-    @app.route('/')
-    def hello():
-        return "Service is running"
+app = Flask(__name__)
 
-    if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=8080)
+@app.route('/')
+def hello():
+    return "Service is running"
+
+def run_open_port():
+    app.run(host='0.0.0.0', port=8080)
 
 if __name__ == "__main__":
-    t = threading.Thread(target=open_port)
+    t = threading.Thread(target=run_open_port)
     t.run()
 
     running = True
