@@ -397,7 +397,7 @@ class Bot():
                     pass
 
             try:
-                bot.polling(none_stop=True)
+                bot.polling(non_stop=True, interval=1, timeout=30)
             except telebot.apihelper.ApiTelegramException:
                 print("telebot.apihelper.ApiTelegramException 95747")
         except requests.exceptions.ConnectionError as ex:

@@ -22,15 +22,20 @@ class MySession:
         Session = sessionmaker(bind=engine)
         self.session = Session()
 
+    # В методе add_user добавьте проверку существования пользователя
     def add_user(self, user):
         try:
+            # Проверяем, существует ли пользователь
+            existing_user = self.session.query(User).get(user.id)
+            if existing_user:
+                return existing_user  # или обновите данные существующего пользователя
+
             self.session.add(user)
             self.session.commit()
+            return user
         except Exception as e:
             self.session.rollback()
             raise e
-        finally:
-            self.session.close()  # Или используйте session.remove() в зависимости от вашей настройки
 
     def add_request(self, user_id: int):
         """Добавляет запрос пользователю"""
