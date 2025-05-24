@@ -181,7 +181,7 @@ class Bot():
             bot = self.bot
 
             # обработчик всех сообщений не начинающихся с '/'
-            @bot.message_handler(regexp=r"^(?!\/).+$")
+            @bot.message_handler(regexp=r"^((?!\/).|\n)+$")
             def handle_other_messages(message: telebot.types.Message) -> None:
                 # регистрируем нового пользователя в базе данных
                 new_user = User(id=message.from_user.id)
