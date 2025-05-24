@@ -1,4 +1,3 @@
-import models.config
 import requests               # Библиотека для HTTP-запросов
 import telebot               # Основная библиотека для работы с Telegram API
 from telebot import formatting as frmt  # Модуль форматирования сообщений
@@ -9,9 +8,16 @@ import time                   # Работа с датой и временем
 from models.orm import MySession, User  # ORM-модели для работы с базой данных
 import logging                # Стандартная библиотека Python для ведения логов
 import os
+from dotenv import load_dotenv
 
-TOKEN = os.environ.get("BOT_TOKEN")
-assert TOKEN is not None, "TOKEN environment variable is not set!"
+# Загружаем переменные из .env
+load_dotenv()
+
+# Получаем токен
+TOKEN = os.getenv("BOT_TOKEN")
+
+if not TOKEN:
+    raise ValueError("Токен бота не найден в .env!")
 
 # настройка логгера
 logger = logging.getLogger('my_app')
