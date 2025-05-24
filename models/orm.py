@@ -23,12 +23,14 @@ class MySession:
         self.session = Session()
 
     def add_user(self, user):
-        """Добавляет пользователя в БД"""
         try:
             self.session.add(user)
             self.session.commit()
-        except IntegrityError:
+        except Exception as e:
             self.session.rollback()
+            raise e
+        finally:
+            self.session.close()  # Или используйте session.remove() в зависимости от вашей настройки
 
     def add_request(self, user_id: int):
         """Добавляет запрос пользователю"""
