@@ -1,4 +1,4 @@
-import models.config
+import config
 import requests               # Библиотека для HTTP-запросов
 import telebot               # Основная библиотека для работы с Telegram API
 from telebot import formatting as frmt  # Модуль форматирования сообщений
