@@ -102,12 +102,14 @@ class Bot():
                     pl_list = f"\n• Список игроков: {(', '.join(frmt.hcode(p['name']) for p in data['players_list']) if data['players_list'] else '-')}"
                 else:
                     pl_list = ""
+
+                motd_text = '\n'.join(data['motd'])
                 return f"""{'🟢' if data['is_online'] else "⚫"} {frmt.hbold('Сервер')} {frmt.hcode(address)} 
 
 • Запрос: {frmt.hcode(address)}
 • Цифровой IP: {frmt.hcode(data['address'])}
 • Описание: 
-{frmt.hpre('\n'.join(data['motd']), language="motd")}
+{frmt.hpre(motd_text, language="motd")}
 • Версия: {frmt.hcode(data['version'])}
 • Онлайн игроков: {data['players']} / {data['max_players']}{pl_list} 
 """
