@@ -51,11 +51,23 @@ def print_fav_servers(fav_servers: dict):
     return out
 
 
-# получаем имя пользователя
-def get_printable_user(from_user):
-    usr = from_user
-    return f"{usr.first_name}{'' if not usr.last_name else f' {usr.last_name}'} ({f'@{usr.username}, ' if usr.username else ''}{usr.id})"
+def get_printable_user(from_user, from_chat= None, formatting=False) -> str:
+    if formatting:
+        return (
+                f"{html.escape(from_user.first_name)}"
+                f"{'' if not from_user.last_name else f' {html.escape(from_user.last_name)}'}"
+                f" ({f'@{from_user.username}, ' if from_user.username else ''}"
+                f"<a href=\"{'tg://user?id=' + str(from_user.id)})\">" + str(from_user.id) + "</a>"
+                                                                                             f"{(', chat: ' + '<code>' + str(from_chat.id) + '</code>') if not from_chat is None else ''})"
 
+        )
+    else:
+        return (
+            f"{from_user.first_name}"
+            f"{'' if not from_user.last_name else f' {from_user.last_name}'}"
+            f" ({f'@{from_user.username}, ' if from_user.username else ''}"
+            f"{'tg://user?id=' + str(from_user.id)}"
+            f"{(', chat_id: ' + str(from_chat.id)) if not from_chat is None else ''})")
 
 def get_printable_time():
     return time.strftime("%H:%M.%S %d.%m.%Y", time.localtime())  # упорядочиваем время в нужный формат
@@ -118,11 +130,11 @@ class Bot():
 • Онлайн игроков: {data['players']} / {data['max_players']}{pl_list} 
 """
             else:
-                raise GetServerInfoError(f'Произошла ошибка. Нет ответа от сервера <code>{address}</code>')  # если пинг провалился
+                raise GetServerInfoError(f'Произошла ошибка. Нет ответа от сервера {address}')  # если пинг провалился
 
         except requests.exceptions.Timeout:
             raise GetServerInfoError(
-                f'Превышено время ожидания ответа от сервера "code>{address}</code>')  # если произошёл таймаут
+                f'Превышено время ожидания ответа от сервера {address}')  # если произошёл таймаут
 
         except KeyError as e:
             telebot.logger.error("Missing key in data: %s", str(e))
