@@ -1,3 +1,5 @@
+import html
+
 import requests               # Библиотека для HTTP-запросов
 import telebot               # Основная библиотека для работы с Telegram API
 from telebot import formatting as frmt  # Модуль форматирования сообщений
@@ -78,16 +80,16 @@ class Bot():
     MAX_FAV_SERVERS = 10
     HELP_TEXT = (frmt.hbold("Get Minecraft Servers Information Bot") + "\n\n" +
                 """Я бот, который позволяет получать информацию о серверах Minecraft
-    Просто напиши мне адрес (IP) сервера и я напишу тебе информацию о нём (онлайн, описание, и проч.)
+Просто напиши мне адрес (IP) сервера и я напишу тебе информацию о нём (онлайн, описание, и проч.)
 
-    Доступные команды:
-    • /stats ADDRESS - получение информация о сервере с адресом ADDRESS
-    • /help - получение справка
-    • /fav - изменение и просмотр избранных серверов:
-        • /fav - просмотр ваших избранных серверов
-        • /fav add 2b2t.org - добавить сервер с адресом 2b2t.org в избранные сервера (имя в избранных совпадает с адресом)
-        • /fav add 2b2t.org bestServer - добавить сервер с адресом 2b2t.org в избранные под именем bestServer
-        • /fav del 2b2t.org - удаляет сервер с именем 2b2t.org из избранного
+Доступные команды:
+• <code>/stats ADDRESS</code> - получение информация о сервере с адресом ADDRESS
+• /help - получение справка
+• /fav - изменение и просмотр избранных серверов:
+    • /fav - просмотр ваших избранных серверов
+    • <code>/fav add 2b2t.org</code> - добавить сервер с адресом 2b2t.org в избранные сервера (имя в избранных совпадает с адресом)
+    • <code>/fav add 2b2t.org bestServer</code> - добавить сервер с адресом 2b2t.org в избранные под именем bestServer
+    • <code>/fav del 2b2t.org</code> - удаляет сервер с именем 2b2t.org из избранного
     """)
     INVILID_CMD_USE = "Неверное использование команды\nДля получения справки: /help"
 
@@ -116,11 +118,11 @@ class Bot():
 • Онлайн игроков: {data['players']} / {data['max_players']}{pl_list} 
 """
             else:
-                raise GetServerInfoError(f'Произошла ошибка. Нет ответа от сервера "{address}"')  # если пинг провалился
+                raise GetServerInfoError(f'Произошла ошибка. Нет ответа от сервера <code>{address}</code>')  # если пинг провалился
 
         except requests.exceptions.Timeout:
             raise GetServerInfoError(
-                f'Превышено время ожидания ответа от сервера "{address}"')  # если произошёл таймаут
+                f'Превышено время ожидания ответа от сервера "code>{address}</code>')  # если произошёл таймаут
 
         except KeyError as e:
             telebot.logger.error("Missing key in data: %s", str(e))
@@ -144,7 +146,7 @@ class Bot():
             r1 = telebot.types.InlineQueryResultArticle(
                 id=f"{int(time.time())}_{randint(0, 10000)}",
                 title=f"🟢 {name} • {address}",
-                description="Нажмите для получения информации о сервере",
+                description="Нажмите здесь получения информации о сервере",
                 input_message_content=telebot.types.InputTextMessageContent(
                     self.generate_server_description(address),  # генерируем описание данного сервера
                     parse_mode="HTML"
@@ -167,14 +169,14 @@ class Bot():
         fav_servers = self.session.get_fav_servers(msg.from_user.id)
         if len(fav_servers) > self.MAX_FAV_SERVERS:
             self.bot.send_message(msg.chat.id,
-                                  f"Не удалось добавить сервер в избранные\nМаксимальное количество избранных серверов: {self.MAX_FAV_SERVERS}",
+                                  f"Не удалось добавить сервер в избранные. \nПревышено максимальное количество избранных серверов: {self.MAX_FAV_SERVERS}",
                                   reply_to_message_id=msg.id,
                                   reply_markup=self.get_markup(msg.from_user.id))
             return
         fav_servers[f"{name}"] = address  # добавляем новый сервер
         self.session.set_fav_servers(msg.from_user.id, fav_servers)
-        self.bot.send_message(msg.chat.id, f"Добавили сервер", reply_to_message_id=msg.id,
-                              reply_markup=self.get_markup(msg.from_user.id))  # отправляем сообщение если всё хорошо
+        self.bot.send_message(msg.chat.id, f"Добавили сервер {frmt.hcode(html.escape(name))} в избранные", reply_to_message_id=msg.id,
+                              reply_markup=self.get_markup(msg.from_user.id), parse_mode="html")  # отправляем сообщение если всё хорошо
 
     def mainloop(self):
         try:
@@ -284,7 +286,7 @@ class Bot():
 
                 except ValueError:
                     # если не указан IP-адрес
-                    error_msg = f"{frmt.hbold('Ошибка:')} Не указан IP-адрес сервера!\nПример использования: {frmt.hcode('/stats 2b2t.org')}"
+                    error_msg = f"{frmt.hbold('Ошибка:')} Не указан IP-адрес сервера!\n\nПример использования: {frmt.hcode('/stats 2b2t.org')}"
                     bot.reply_to(message, error_msg, parse_mode='html')
                 except GetServerInfoError as ex:
                     error_msg = f"{frmt.hbold('Ошибка:')} {ex}"
@@ -307,96 +309,64 @@ class Bot():
                 send_data(message)
 
             @bot.inline_handler(lambda query: True)
-            def query_text(inline_query):
-                # регистрируем нового пользователя
-                new_user = User(id=inline_query.from_user.id)
-                self.session.add_user(new_user)
+            def handle_inline_query(inline_query):
                 try:
-                    write_msg(f"{get_printable_user(inline_query.from_user)} inline: {inline_query.query}")
+                    # Логируем запрос
+                    logger.info(f"Inline query from {inline_query.from_user.id}: {inline_query.query}")
+
+                    # Создаём пользователя если его нет
+                    new_user = User(id=inline_query.from_user.id)
+                    self.session.add_user(new_user)
+
+                    results = []
                     query = inline_query.query.strip()
 
                     if not query:
-                        replyes = []
-                        # Используем простой текст без форматирования для пустого запроса
-                        r1 = telebot.types.InlineQueryResultArticle(
-                            id=f"{int(time.time())}_{randint(0, 10000)}",
-                            title="Введите IP-адрес Minecraft сервера",
-                            description="Для получения информации о нём",
+                        # Если запрос пустой - показываем подсказку
+                        item = telebot.types.InlineQueryResultArticle(
+                            id='1',
+                            title="Введите адрес сервера Minecraft",
+                            description="Например: mc.example.com",
                             input_message_content=telebot.types.InputTextMessageContent(
-                                f"Для получения информации о сервере Minecraft напишите боту "
-                                f"@{bot.get_me().username} адрес сервера или введите в любом чате:\n"
-                                f"@{bot.get_me().username} server-address, где server-address - адрес Minecraft сервера",
-                                parse_mode="html"
+                                message_text="Введите адрес сервера Minecraft для получения информации",
+                                parse_mode="HTML"
                             )
                         )
-                        replyes.append(r1)
-                        for k, v in self.session.get_fav_servers(inline_query.from_user.id).items():
-                            r = self.get_inline_preview(inline_query, v, k)
-                            replyes.append(r)
-
-                        bot.answer_inline_query(inline_query.id, replyes, cache_time=1)
-                        return
-                    replyes = []
-
-                    try:
-                        # фиксируем сообщение
-                        self.session.add_request(inline_query.from_user.id)
-                        # готовим предварительный результат описания
-                        replyes.append(telebot.types.InlineQueryResultArticle(
-                            id=f"{int(time.time())}_{randint(0, 10000)}",
-                            title=f"🟢 {query}",
-                            description="Получить описание сервера (клик сюда)",
-                            input_message_content=telebot.types.InputTextMessageContent(
-                                self.generate_server_description(query),
-                                parse_mode="HTML"  # Явно указываем HTML
+                        results.append(item)
+                    else:
+                        # Обрабатываем запрос
+                        try:
+                            server_info = self.generate_server_description(query)
+                            item = telebot.types.InlineQueryResultArticle(
+                                id=query,
+                                title=f"Информация о сервере {query}",
+                                description="Нажмите чтобы отправить информацию",
+                                input_message_content=telebot.types.InputTextMessageContent(
+                                    message_text=server_info,
+                                    parse_mode="HTML"
+                                )
                             )
-                        ))
-                        # добавляем другие избранные серверы пользователя
-                        for k, v in self.session.get_fav_servers(inline_query.from_user.id).items():
-                            if inline_query.query in k + v:
-                                r = self.get_inline_preview(inline_query, v, k)
-                                replyes.append(r)
-
-                        bot.answer_inline_query(inline_query.id, replyes, cache_time=1)
-
-                    except GetServerInfoError as ex:
-                        # обрабатываем исключение связанное с отсутствием данных о сервере
-                        error_msg = str(ex)
-
-                        replyes.append(telebot.types.InlineQueryResultArticle(
-                            id=f"{int(time.time())}_{randint(0, 10000)}",
-                            title="❌Произошла ошибка",
-                            description=str(ex),
-                            input_message_content=telebot.types.InputTextMessageContent(
-                                error_msg,
-                                parse_mode=None
+                            results.append(item)
+                        except GetServerInfoError as e:
+                            item = telebot.types.InlineQueryResultArticle(
+                                id='error',
+                                title="Ошибка",
+                                description=str(e),
+                                input_message_content=telebot.types.InputTextMessageContent(
+                                    message_text=f"Ошибка: {str(e)}",
+                                    parse_mode="HTML"
+                                )
                             )
-                        ))
-                        # добавляем сервера соответствующие запросу
-                        for k, v in self.session.get_fav_servers(inline_query.from_user.id).items():
-                            if inline_query.query in k + v:
-                                r = self.get_inline_preview(inline_query, v, k)
-                                replyes.append(r)
-                        bot.answer_inline_query(inline_query.id, replyes, cache_time=1)
-                        return
+                            results.append(item)
 
-                    except Exception as ex:
-                        # обработка общей ошибки
-                        logger.error(f"Inline query error: {str(ex)}")
-                        # предупреждение об ошибке
-                        r = telebot.types.InlineQueryResultArticle(
-                            id=f"{int(time.time())}_{randint(0, 10000)}",
-                            title="Ошибка",
-                            description="Произошла ошибка при обработке запроса",
-                            input_message_content=telebot.types.InputTextMessageContent(
-                                "Произошла ошибка при обработке запроса. Попробуйте позже"
-                            )
-                        )
-                        bot.answer_inline_query(inline_query.id, [r], cache_time=1)
-                finally:
-                    pass
+                    # Отправляем ответ
+                    bot.answer_inline_query(inline_query.id, results, cache_time=1)
+
+                except Exception as e:
+                    logger.error(f"Error in inline handler: {str(e)}")
 
             try:
+                bot.remove_webhook()
                 bot.polling(non_stop=True, interval=1, timeout=30)
             except telebot.apihelper.ApiTelegramException:
                 print("telebot.apihelper.ApiTelegramException 95747")
@@ -407,21 +377,6 @@ class Bot():
             print("telebot.apihelper.ApiTelegramException 95747")
 
 
-app = Flask(__name__)
-
-@app.route('/')
-def hello():
-    return "Service is running"
-
-def run_flask():
-    app.run(host='0.0.0.0', port=8080)
-
-if __name__ == "__main__":
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
-
-    running = True
-    while running:
-        b = Bot()
-        b.mainloop()
+if __name__ == '__main__':
+    b = Bot()
+    b.mainloop()
